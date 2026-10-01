@@ -9,6 +9,7 @@ const sessionsListContainer = document.getElementById('sessions-list');
 const streakNumberElement = document.getElementById('streak-number');
 const bestStreakNumberElement = document.getElementById('best-streak-number');
 const weeklyMinutesElement = document.getElementById('weekly-minutes');
+const monthlyDaysElement = document.getElementById('monthly-days');
 
 // --- FUNCIONES DE UTILIDAD DE FECHAS (Local) ---
 
@@ -144,6 +145,27 @@ function calculateWeeklyMinutes(sessions) {
         .reduce((total, s) => total + Number(s.minutes), 0);
 }
 
+// --- CÁLCULO DE DÍAS ESTUDIADOS ESTE MES ---
+function calculateDaysThisMonth(sessions) {
+    if (sessions.length === 0) return 0;
+
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth(); // 0-11
+
+    // Filtrar sesiones del mes actual y obtener fechas únicas
+    const uniqueDatesThisMonth = new Set(
+        sessions
+            .filter(s => {
+                const [year, month] = s.date.split('-').map(Number);
+                return year === currentYear && month === currentMonth + 1;
+            })
+            .map(s => s.date)
+    );
+
+    return uniqueDatesThisMonth.size;
+}
+
 // --- RENDERIZADO DE LA INTERFAZ ---
 
 function render() {
@@ -157,14 +179,16 @@ function render() {
         return (b.id || 0) - (a.id || 0);
     });
 
-    // 2. Actualizar racha actual, mejor racha y minutos de la semana
+    // 2. Actualizar todas las métricas
     const streak = calculateStreak(sessions);
     const bestStreak = calculateBestStreak(sessions);
     const weeklyMinutes = calculateWeeklyMinutes(sessions);
+    const monthlyDays = calculateDaysThisMonth(sessions);
 
     streakNumberElement.textContent = streak;
     bestStreakNumberElement.textContent = bestStreak;
     weeklyMinutesElement.textContent = weeklyMinutes;
+    monthlyDaysElement.textContent = monthlyDays;
 
     // 3. Renderizar lista de sesiones
     sessionsListContainer.innerHTML = '';
