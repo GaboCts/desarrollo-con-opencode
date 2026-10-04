@@ -39,6 +39,39 @@
             </div>
         </section>
 
+        <!-- Mapa de Calor -->
+        <section class="heatmap-section">
+            <h2>Mapa de calor</h2>
+            <div class="heatmap-wrapper">
+                <div class="heatmap-container">
+                    <div class="heatmap-months" id="heatmap-months"></div>
+                    <div class="heatmap-body">
+                        <div class="heatmap-weekdays">
+                            <span>L</span>
+                            <span>M</span>
+                            <span>X</span>
+                            <span>J</span>
+                            <span>V</span>
+                            <span>S</span>
+                            <span>D</span>
+                        </div>
+                        <div class="heatmap-grid" id="heatmap-grid"></div>
+                    </div>
+                </div>
+                <div class="heatmap-legend">
+                    <span>Menos</span>
+                    <div class="legend-colors">
+                        <div class="legend-cell" style="background-color: #ebedf0"></div>
+                        <div class="legend-cell" style="background-color: #9be9a8"></div>
+                        <div class="legend-cell" style="background-color: #40c463"></div>
+                        <div class="legend-cell" style="background-color: #30a14e"></div>
+                        <div class="legend-cell" style="background-color: #216e39"></div>
+                    </div>
+                    <span>Más</span>
+                </div>
+            </div>
+        </section>
+
         <!-- Formulario de Registro -->
         <section class="form-section">
             <h2>Nueva sesión</h2>
@@ -68,6 +101,10 @@
         </section>
     </div>
 
+    <!-- Ventana emergente del mapa de calor -->
+    <div class="heatmap-tooltip" id="heatmap-tooltip"></div>
+
+    <script src="src/heat-map.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

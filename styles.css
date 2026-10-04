@@ -117,6 +117,154 @@ header h1 {
     letter-spacing: 0.04em;
 }
 
+/* === Mapa de calor === */
+.heatmap-section {
+    margin-bottom: 32px;
+}
+
+.heatmap-section h2 {
+    font-size: 1.125rem;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e5e0d8;
+}
+
+.heatmap-wrapper {
+    border: 1px solid #d4cfc7;
+    border-radius: 6px;
+    padding: 12px;
+}
+
+.heatmap-container {
+    overflow-x: auto;
+}
+
+.heatmap-months {
+    display: grid;
+    grid-template-columns: 24px repeat(12, 10px);
+    gap: 3px;
+    margin-bottom: 4px;
+    font-size: 0.6875rem;
+    color: #8a8a8a;
+}
+
+.heatmap-months span {
+    text-align: center;
+}
+
+.heatmap-body {
+    display: flex;
+    gap: 4px;
+    height: 6.2rem;
+}
+
+.heatmap-weekdays {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.6875rem;
+    color: #8a8a8a;
+    padding-top: 1px;
+}
+
+.heatmap-weekdays span {
+    height: 10px;
+    line-height: 10px;
+    text-align: right;
+    padding-right: 4px;
+}
+
+.heatmap-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 10px);
+    gap: 3px;
+    flex: 1;
+}
+
+.heatmap-cell {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: outline 0.1s ease;
+}
+
+.heatmap-cell:hover {
+    outline: 1px solid #1a1a1a;
+    outline-offset: 1px;
+}
+
+.heatmap-cell.future {
+    cursor: default;
+}
+
+.heatmap-cell.future:hover {
+    outline: none;
+}
+
+/* === Leyenda del mapa === */
+.heatmap-legend {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+    margin-top: 8px;
+    font-size: 0.75rem;
+    color: #8a8a8a;
+}
+
+.legend-colors {
+    display: flex;
+    gap: 2px;
+}
+
+.legend-cell {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+}
+
+/* === Ventana emergente del mapa === */
+.heatmap-tooltip {
+    position: fixed;
+    display: none;
+    background-color: #1a1a1a;
+    color: #faf8f5;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    z-index: 1000;
+    max-width: 220px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    pointer-events: none;
+}
+
+.heatmap-tooltip.visible {
+    display: block;
+}
+
+.heatmap-tooltip .tooltip-date {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.heatmap-tooltip .tooltip-minutes {
+    color: #9be9a8;
+    font-weight: 600;
+}
+
+.heatmap-tooltip .tooltip-topics {
+    margin-top: 4px;
+    color: #c0c0c0;
+    font-size: 0.75rem;
+}
+
+.heatmap-tooltip .tooltip-more {
+    color: #8a8a8a;
+    font-style: italic;
+}
+
 /* === Secciones de contenido === */
 .form-section,
 .sessions-section {

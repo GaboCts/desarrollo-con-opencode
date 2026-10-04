@@ -1,3 +1,7 @@
+// ============================================
+// Diario de Estudio - Lógica principal
+// ============================================
+
 // --- CONSTANTES Y SELECTORES ---
 const STORAGE_KEY = 'diario_estudio_sesiones';
 
@@ -11,9 +15,13 @@ const bestStreakNumberElement = document.getElementById('best-streak-number');
 const weeklyMinutesElement = document.getElementById('weekly-minutes');
 const monthlyDaysElement = document.getElementById('monthly-days');
 
+// Selectores del mapa de calor
+const heatmapGrid = document.getElementById('heatmap-grid');
+const heatmapMonths = document.getElementById('heatmap-months');
+const heatmapTooltip = document.getElementById('heatmap-tooltip');
+
 // --- FUNCIONES DE UTILIDAD DE FECHAS (Local) ---
 
-// Obtiene la fecha actual en formato YYYY-MM-DD usando la hora local del usuario
 function getLocalDateString(date = new Date()) {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -21,7 +29,6 @@ function getLocalDateString(date = new Date()) {
     return `${year}-${month}-${day}`;
 }
 
-// Resta un número de días a una fecha dada en formato YYYY-MM-DD (en hora local)
 function subtractDays(dateString, days) {
     const [year, month, day] = dateString.split('-').map(Number);
     const date = new Date(year, month - 1, day);
@@ -29,7 +36,6 @@ function subtractDays(dateString, days) {
     return getLocalDateString(date);
 }
 
-// Suma un día a una fecha dada en formato YYYY-MM-DD (en hora local)
 function addDays(dateString, days) {
     const [year, month, day] = dateString.split('-').map(Number);
     const date = new Date(year, month - 1, day);
@@ -37,7 +43,6 @@ function addDays(dateString, days) {
     return getLocalDateString(date);
 }
 
-// Formatea una fecha YYYY-MM-DD a formato legible en español (ej: "5 de junio de 2026")
 function formatDateReadable(dateString) {
     const [year, month, day] = dateString.split('-').map(Number);
     const date = new Date(year, month - 1, day);
@@ -60,6 +65,7 @@ function saveSessions(sessions) {
 }
 
 // --- CÁLCULO DE LA RACHA ACTUAL ---
+
 function calculateStreak(sessions) {
     if (sessions.length === 0) return 0;
 
@@ -89,6 +95,7 @@ function calculateStreak(sessions) {
 }
 
 // --- CÁLCULO DE LA MEJOR RACHA ---
+
 function calculateBestStreak(sessions) {
     if (sessions.length === 0) return 0;
 
@@ -117,12 +124,11 @@ function calculateBestStreak(sessions) {
     return maxStreak;
 }
 
-// --- CÁLCULO DE MINUTOS DE LA SEMANA (Lunes a Domingo) ---
+// --- CÁLCULO DE MINUTOS DE THE WEEK ---
+
 function getCurrentWeekRange() {
     const now = new Date();
-    const dayOfWeek = now.getDay(); // 0 (Domingo) a 6 (Sábado)
-
-    // Distancia al Lunes (si es Domingo [0], son 6 días atrás; si es Lunes [1], 0, etc.)
+    const dayOfWeek = now.getDay();
     const distanceToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
 
     const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -146,14 +152,14 @@ function calculateWeeklyMinutes(sessions) {
 }
 
 // --- CÁLCULO DE DÍAS ESTUDIADOS ESTE MES ---
+
 function calculateDaysThisMonth(sessions) {
     if (sessions.length === 0) return 0;
 
     const now = new Date();
     const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth(); // 0-11
+    const currentMonth = now.getMonth();
 
-    // Filtrar sesiones del mes actual y obtener fechas únicas
     const uniqueDatesThisMonth = new Set(
         sessions
             .filter(s => {
@@ -166,12 +172,99 @@ function calculateDaysThisMonth(sessions) {
     return uniqueDatesThisMonth.size;
 }
 
+// --- MAPA DE CALOR ---
+
+function renderHeatMap(sessions) {
+    const today = getLocalDateString();
+    const range = HeatMapLib.getHeatMapRange(today);
+    const data = HeatMapLib.buildHeatMapData(sessions, today);
+    const weeks = HeatMapLib.getWeeksInRange(range.startDate, range.endDate, today);
+    const monthLabels = HeatMapLib.getMonthLabels(weeks);
+
+    // Renderizar etiquetas de mes
+    heatmapMonths.innerHTML = '<span></span>'; // Espacio para días de la semana
+    for (let i = 0; i < 12; i++) {
+        const label = monthLabels.find(l => l.colIndex === i);
+        const span = document.createElement('span');
+        span.textContent = label ? label.label : '';
+        heatmapMonths.appendChild(span);
+    }
+
+    // Renderizar cuadrícula
+    heatmapGrid.innerHTML = '';
+
+    weeks.forEach(week => {
+        week.days.forEach(day => {
+            // Ocultar días de semanas futuras
+            if (day.isFuture && !day.isCurrentWeek) {
+                return;
+            }
+
+            const cell = document.createElement('div');
+            cell.className = 'heatmap-cell';
+            cell.dataset.date = day.date;
+
+            const dayData = data.get(day.date);
+            const minutes = dayData ? dayData.minutes : 0;
+            const color = HeatMapLib.getDayColor(minutes);
+
+            cell.style.backgroundColor = color;
+
+            if (day.isFuture) {
+                cell.classList.add('future');
+                cell.style.backgroundColor = HeatMapLib.COLORS.FUTURE;
+            }
+
+            // Click para mostrar ventana emergente
+            cell.addEventListener('click', (e) => {
+                showTooltip(e, day.date, dayData);
+            });
+
+            heatmapGrid.appendChild(cell);
+        });
+    });
+}
+
+function showTooltip(event, date, dayData) {
+    const minutes = dayData ? dayData.minutes : 0;
+    const topics = dayData ? dayData.topics : [];
+
+    let html = `<div class="tooltip-date">${formatDateReadable(date)}</div>`;
+    html += `<div class="tooltip-minutes">${minutes} min</div>`;
+
+    if (topics.length > 0) {
+        html += '<div class="tooltip-topics">';
+        const maxTopics = 5;
+        const displayTopics = topics.slice(0, maxTopics);
+        html += displayTopics.map(t => `• ${escapeHTML(t)}`).join('<br>');
+        if (topics.length > maxTopics) {
+            html += `<br><span class="tooltip-more">+${topics.length - maxTopics} más</span>`;
+        }
+        html += '</div>';
+    } else {
+        html += '<div class="tooltip-topics">Sin temas</div>';
+    }
+
+    heatmapTooltip.innerHTML = html;
+    heatmapTooltip.classList.add('visible');
+
+    // Posicionar cerca del click
+    const x = event.clientX + 10;
+    const y = event.clientY + 10;
+    heatmapTooltip.style.left = `${x}px`;
+    heatmapTooltip.style.top = `${y}px`;
+}
+
+function hideTooltip() {
+    heatmapTooltip.classList.remove('visible');
+}
+
 // --- RENDERIZADO DE LA INTERFAZ ---
 
 function render() {
     const sessions = getSessions();
 
-    // 1. Ordenar sesiones: de la más reciente a la más antigua
+    // 1. Ordenar sesiones
     sessions.sort((a, b) => {
         if (b.date !== a.date) {
             return b.date.localeCompare(a.date);
@@ -179,7 +272,7 @@ function render() {
         return (b.id || 0) - (a.id || 0);
     });
 
-    // 2. Actualizar todas las métricas
+    // 2. Actualizar métricas
     const streak = calculateStreak(sessions);
     const bestStreak = calculateBestStreak(sessions);
     const weeklyMinutes = calculateWeeklyMinutes(sessions);
@@ -195,28 +288,31 @@ function render() {
 
     if (sessions.length === 0) {
         sessionsListContainer.innerHTML = '<p class="empty-state">No hay sesiones registradas todavía. ¡Empieza hoy!</p>';
-        return;
+    } else {
+        sessions.forEach(session => {
+            const item = document.createElement('div');
+            item.className = 'session-item';
+
+            item.innerHTML = `
+                <div class="session-info">
+                    <span class="session-subject">${escapeHTML(session.subject)}</span>
+                    <span class="session-date">${formatDateReadable(session.date)}</span>
+                </div>
+                <div class="session-minutes">
+                    ${session.minutes} min
+                </div>
+            `;
+
+            sessionsListContainer.appendChild(item);
+        });
     }
 
-    sessions.forEach(session => {
-        const item = document.createElement('div');
-        item.className = 'session-item';
-
-        item.innerHTML = `
-            <div class="session-info">
-                <span class="session-subject">${escapeHTML(session.subject)}</span>
-                <span class="session-date">${formatDateReadable(session.date)}</span>
-            </div>
-            <div class="session-minutes">
-                ⏱️ ${session.minutes} min
-            </div>
-        `;
-
-        sessionsListContainer.appendChild(item);
-    });
+    // 4. Renderizar mapa de calor
+    renderHeatMap(sessions);
 }
 
-// Función auxiliar para prevenir XSS básico al mostrar texto del usuario
+// --- UTILIDADES ---
+
 function escapeHTML(str) {
     return str.replace(/[&<>'"]/g, 
         tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
@@ -230,6 +326,13 @@ function init() {
     render();
 
     form.addEventListener('submit', handleFormSubmit);
+
+    // Ocultar tooltip al hacer clic fuera
+    document.addEventListener('click', (e) => {
+        if (!e.target.classList.contains('heatmap-cell')) {
+            hideTooltip();
+        }
+    });
 }
 
 function handleFormSubmit(e) {
@@ -262,4 +365,5 @@ function handleFormSubmit(e) {
     render();
 }
 
+// Iniciar cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', init);
